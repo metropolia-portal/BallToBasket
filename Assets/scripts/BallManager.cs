@@ -20,7 +20,13 @@ public class BallManager : MonoBehaviour {
 	}
 	
 	void OnCollisionEnter(Collision col)
-	{		
+	{	
+		if (col.gameObject.tag == "star")
+		{
+			Destroy(col.gameObject);
+		}
+		
+		
 		/*Vector3 velocity = this.rigidbody.velocity;
 		Vector3 norm = col.contacts[0].normal;
 		Vector3 force = velocity + forceStrength*norm;
