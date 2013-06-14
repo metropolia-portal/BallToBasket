@@ -4,8 +4,9 @@ using System.Collections;
 public class LineManager : MonoBehaviour {
 
 	
-	public float maxDistance = 200;
-	float wholeDistance = 0f;
+	float maxDistance;
+	float wholeDistance;
+	float minColliderLenght;
 	 
 	public Material blockMaterial;
 	PhysicMaterial blockPhysicsMaterial;
@@ -18,13 +19,17 @@ public class LineManager : MonoBehaviour {
 
 	
 	Vector3 mousePosition; // Vector3 because of using a raycast.
-	Vector3 mouseHit;
+	//Vector3 mouseHit;
 	Vector3 newDotPosition;
 	Vector3 lastDotPosition;
 	
 	
 	bool dragging = false;
 	bool lastPointExist = false;
+	
+	// status bar
+	public Texture2D statusBarBorder;
+	public Texture2D markerTexture;
 	
 	
 	
@@ -35,6 +40,9 @@ public class LineManager : MonoBehaviour {
 	// Use this for initialization
 	void Start () 
 	{
+		maxDistance = 10;		
+		wholeDistance = 0;
+		minColliderLenght = 0.5f;
 		ball = GameObject.Find("ball");
 		ball.rigidbody.useGravity = false;	
 	}
@@ -59,15 +67,42 @@ public class LineManager : MonoBehaviour {
 				MouseUp();
 			}			
 			if(dragging)
-			{		
-				mousePosForTrail = MousePoint();			
-				currentTrailRendererObject.transform.position = mousePosForTrail;		
-				newDotPosition = mousePosForTrail;
-				if(newDotPosition != lastDotPosition && Vector3.SqrMagnitude(newDotPosition - lastDotPosition) > 0.5f)
+			{						
+				newDotPosition = MousePoint();		
+				float colliderLengthBetweenFrames = Vector3.Distance(newDotPosition, lastDotPosition);								
+				
+				if(newDotPosition != lastDotPosition)					
+				{	
+					if(colliderLengthBetweenFrames >= minColliderLenght)
+					{
+						//
+						// split collider length
+						int amountOfColliders = (int)(colliderLengthBetweenFrames/minColliderLenght);						
+						
+						float deltaXW = (newDotPosition.x-lastDotPosition.x);
+						float deltaYW = (newDotPosition.y-lastDotPosition.y);
+						float deltaXT = deltaXW*(colliderLengthBetweenFrames - minColliderLenght*amountOfColliders)/colliderLengthBetweenFrames;
+						float deltaYT = deltaYW*(colliderLengthBetweenFrames - minColliderLenght*amountOfColliders)/colliderLengthBetweenFrames;					
+						
+						
+						
+						float deltaXPerCollider = (deltaXW-deltaXT)/amountOfColliders;
+						float deltaYPerCollider= (deltaYW-deltaYT)/amountOfColliders;						
+						
+						for(int i = 0; i < amountOfColliders; i++)
+						{
+							CreateBoxCollider(new Vector3(lastDotPosition.x + deltaXPerCollider, lastDotPosition.y + deltaYPerCollider, 0));
+						}
+					}
+						
+					currentTrailRendererObject.transform.position = lastDotPosition;
+				}
+				else
 				{
-					wholeDistance  +=  Vector3.SqrMagnitude(newDotPosition - lastDotPosition);				
-					CreateBoxCollider(newDotPosition);				
-				}			
+					currentTrailRendererObject.transform.position = newDotPosition;
+				}
+				
+								
 			}
 		}
 		else
@@ -75,6 +110,7 @@ public class LineManager : MonoBehaviour {
 			if (dragging)
 			{
 				MouseUp();
+				currentTrailRendererObject.transform.position = lastDotPosition;
 				dragging = false;
 			}
 		}
@@ -92,190 +128,54 @@ public class LineManager : MonoBehaviour {
 	
 	void MouseDown()
 	{		
+		Vector3 mouseHit;
 		// receive cur mouse position
-		mouseHit = MousePoint();					
+		mouseHit = MousePoint();	
+		
 		// create separate object with trail for each line
 		GameObject tr = Instantiate(trailPrefab,mouseHit,Quaternion.identity) as GameObject;
 		currentTrailRendererObject = tr;
 		tr.transform.position = mouseHit;		
-		dragging = true;		
+		dragging = true;				
 	}
 	
 	void MouseUp()
 	{		
 		newDotPosition = MousePoint();
-		wholeDistance  +=  Vector3.SqrMagnitude(newDotPosition - lastDotPosition);				
 		CreateBoxCollider(newDotPosition);
 		dragging = false;
 		lastPointExist = false;		
+		currentTrailRendererObject.transform.position = lastDotPosition;
 	}
 	
 	void CreateBoxCollider(Vector3 newDotPosition)
-	{
-	
-        Transform dot =(Transform) Instantiate(DotPrefab, newDotPosition, Quaternion.identity); //use random identity to make dots looks more different
-        if (lastPointExist)
+	{		       
+        if (lastPointExist && wholeDistance < maxDistance)
         {
-            GameObject colliderKeeper = new GameObject("collider");
-            BoxCollider bc = colliderKeeper.AddComponent<BoxCollider>();	
-			
+            GameObject colliderKeeper = new GameObject("collider");            
+			BoxCollider bc = colliderKeeper.AddComponent<BoxCollider>();	
+			float distance = Vector3.Distance(newDotPosition, lastDotPosition);
 			colliderKeeper.transform.position = new Vector3((newDotPosition.x-lastDotPosition.x)/2+lastDotPosition.x, (newDotPosition.y-lastDotPosition.y)/2+lastDotPosition.y, 0);
-            colliderKeeper.transform.LookAt(newDotPosition);			
-            bc.size = new Vector3( 0.3f,0.3f, Vector3.Distance(newDotPosition, lastDotPosition) );
-        }
-        lastDotPosition = newDotPosition;
-        lastPointExist = true;
+            colliderKeeper.transform.LookAt(newDotPosition);
+			if(distance < maxDistance-wholeDistance)
+			{
+            	bc.size = new Vector3( 0.3f,0.3f,  distance);			
+			}
+			else
+			{
+				bc.size = new Vector3( 0.3f,0.3f,  maxDistance-wholeDistance);
+			}
+			wholeDistance  +=  bc.size.z;			
+        
+		
+			if(wholeDistance > maxDistance)
+			{
+				wholeDistance = maxDistance;
+			}
+        	lastDotPosition = newDotPosition;
+	        lastPointExist = true;
+		}
     }
-	
-	/*void createBoxWithoutFrontSide(Vector3 p1, Vector3 p2)
-	{	
-		
-		//TODO: recalculate border. Add one more side.
-		
-		Vector3 topLeftFront = p1;
-		Vector3 topRightFront = p2;
-		Vector3 topLeftBack = p1;
-		Vector3 topRightBack = p2;
-				
-		Vector3 bottomLeftFront;
-		Vector3 bottomRightFront;
-		
-		// TODO: check
-		Vector3 backLeft = p1;
-		Vector3 backRight = p2;
-		
-		
-		
-		topRightFront.z = 0.5f;
-		topLeftFront.z = 0.5f;
-		topLeftBack.z = -0.5f;
-		topRightBack.z = -0.5f;
-		
-//		float l = Vector3.Magnitude(p1-p2);		
-//		float b = Mathf.Sqrt(l*l + blockHeight*blockHeight);
-//		float x1 = l*blockHeight/b;
-//		float y1 = blockHeight*blockHeight/b;		
-		
-		bottomLeftFront = topLeftFront;
-		bottomRightFront = topRightFront;
-		
-		
-		bottomLeftFront.y -= y1;
-		bottomLeftFront.x -= x1;
-		bottomRightFront.y -= y1;
-		bottomRightFront.x -= x1;
-		
-		
-		bottomLeftFront.y -= blockHeight;
-		bottomRightFront.y -= blockHeight;
-		
-		backLeft = bottomLeftFront;
-		backLeft.z = -0.5f;		
-		backRight = bottomRightFront;
-		backRight.z = -0.5f;
-		
-		
-		GameObject newLedge = new GameObject();
-		Mesh newMesh = new Mesh();
-		newLedge.AddComponent<MeshFilter>();
-		newLedge.AddComponent<MeshRenderer>();
-		
-		newMesh.vertices = new Vector3[] {topLeftFront, topRightFront, topLeftBack, topRightBack,
-			bottomLeftFront, bottomRightFront, backLeft, backRight};
-		
-		Vector2[] uvs = new Vector2[newMesh.vertices.Length];
-		for(int i = 0; i < uvs.Length; i++)
-		{
-			uvs[i] = new Vector2(newMesh.vertices[i].x, newMesh.vertices[i].z);
-		}		
-		
-		newMesh.uv = uvs;		
-		newMesh.triangles = new int[] {5,4,6, 6,7,5};
-		newMesh.RecalculateNormals();		
-		
-		newLedge.GetComponent<MeshFilter>().mesh = newMesh;
-		if(blockMaterial) 
-			newLedge.renderer.material = blockMaterial;
-		newLedge.AddComponent<MeshCollider>();
-		if(blockPhysicsMaterial) 
-			newLedge.GetComponent<MeshCollider>().material=blockPhysicsMaterial;
-		
-	}
-	
-	
-	void createBox(Vector3 p1, Vector3 p2)
-	{	
-		
-		//TODO: recalculate border. Add one more side.
-		// 
-		Vector3 topLeftFront = p1;
-		Vector3 topRightFront = p2;
-		Vector3 topLeftBack = p1;
-		Vector3 topRightBack = p2;
-				
-		Vector3 bottomLeftFront;
-		Vector3 bottomRightFront;
-		// TODO: check
-		Vector3 backLeft = p1;
-		Vector3 backRight = p2;
-		
-		
-		
-		topRightFront.z = 0.5f;
-		topLeftFront.z = 0.5f;
-		topLeftBack.z = -0.5f;
-		topRightBack.z = -0.5f;
-		
-//		float l = Vector3.Magnitude(p1-p2);		
-//		float b = Mathf.Sqrt(l*l + blockHeight*blockHeight);
-//		float x1 = l*blockHeight/b;
-//		float y1 = blockHeight*blockHeight/b;		
-		
-		bottomLeftFront = topLeftFront;
-		bottomRightFront = topRightFront;
-		
-			
-		bottomLeftFront.y -= y1;
-		bottomLeftFront.x -= x1;
-		bottomRightFront.y -= y1;
-		bottomRightFront.x -= x1;
-		
-		bottomLeftFront.y -= blockHeight;
-		bottomRightFront.y -= blockHeight;
-		
-		backLeft = bottomLeftFront;
-		backLeft.z = -0.5f;		
-		backRight = bottomRightFront;
-		backRight.z = -0.5f;
-		
-		
-		GameObject newLedge = new GameObject();
-		Mesh newMesh = new Mesh();
-		newLedge.AddComponent<MeshFilter>();
-		newLedge.AddComponent<MeshRenderer>();
-		
-		newMesh.vertices = new Vector3[] {topLeftFront, topRightFront, topLeftBack, topRightBack,
-			bottomLeftFront, bottomRightFront, backLeft, backRight};
-		
-		Vector2[] uvs = new Vector2[newMesh.vertices.Length];
-		for(int i = 0; i < uvs.Length; i++)
-		{
-			uvs[i] = new Vector2(newMesh.vertices[i].x, newMesh.vertices[i].z);
-		}		
-		
-		newMesh.uv = uvs;		
-		newMesh.triangles = new int[] {5,4,0, 0,1,5, 0,2,3, 3,1,0, 5,4,6, 6,7,5};
-		newMesh.RecalculateNormals();		
-		
-		newLedge.GetComponent<MeshFilter>().mesh = newMesh;
-		if(blockMaterial) 
-			newLedge.renderer.material = blockMaterial;
-		newLedge.AddComponent<MeshCollider>();
-		if(blockPhysicsMaterial) 
-			newLedge.GetComponent<MeshCollider>().material=blockPhysicsMaterial;
-		
-	}	
-	*/
 	
 	void OnGUI()
 	{
@@ -285,12 +185,22 @@ public class LineManager : MonoBehaviour {
 		}
 		if(GUI.Button(new Rect(50,100,70,50),"Restart"))
 		{
-			Application.LoadLevel(0);
-			
+			Application.LoadLevel(0);			
 		}
+		
+		// bar
 		float x = 100-wholeDistance*100/maxDistance;
 		
 		GUI.TextArea(new Rect(125,50,50,20), x.ToString());		
+		
+		GUI.BeginGroup(new Rect(Screen.width/2-100,2,200,20));
+			GUI.Box(new Rect(0,0, 200,20), statusBarBorder);
+			GUI.BeginGroup(new Rect(2,0, (int)x*2, 16));
+				GUI.DrawTexture(new Rect(0,0,200,20), markerTexture, ScaleMode.ScaleAndCrop);
+			GUI.EndGroup();
+		GUI.EndGroup();
+		
+		
 		
 	}
 	
