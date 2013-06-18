@@ -9,5 +9,6 @@
 
 #Added after reading some advices, as it changes all the time
 Assembly-CSharp.pidb
+Assembly-UnityScript.pidb
 Assembly-UnityScript-firstpass.pidb
 *.userprefs
