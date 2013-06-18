@@ -3,10 +3,10 @@ using System.Collections;
 
 public class GUIManager : MonoBehaviour {
 	
-	UserFieldManager fieldManager;
+//	UserFieldManager fieldManager;
 	// Use this for initialization
 	void Start () {
-		fieldManager = GameObject.Find("Screen").GetComponent<UserFieldManager>();		
+//		fieldManager = GameObject.Find("Screen").GetComponent<UserFieldManager>();		
 	}
 	
 	// Update is called once per frame

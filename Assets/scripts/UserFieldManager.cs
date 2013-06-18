@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System;
 
 public class UserFieldManager : MonoBehaviour
 {
@@ -7,9 +8,9 @@ public class UserFieldManager : MonoBehaviour
 	// 0 - ball object creation
 	// 1 - 2nd object to create
 	// -1 - second obj
-
-	int creationMode = -2;
-	int objectMode = -1;
+	public GameObject brushPrefub;
+	
+	int creationMode = -1;
 	public GameObject[] objectsToCreate;
 	GameObject currentObject = null;
 	float maxDistance;
@@ -29,8 +30,6 @@ public class UserFieldManager : MonoBehaviour
 	Vector3 lastDotPosition;
 	bool dragging = false;
 	bool lastPointExist = false;
-	bool buttonNotPressed = true;
-	bool mousePressed = false;
 	
 	// status bar
 	public Texture2D statusBarBorder;
@@ -41,9 +40,9 @@ public class UserFieldManager : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		maxDistance = 10;		
+		maxDistance = 100;		
 		wholeDistance = 0;
-		minColliderLenght = 0.5f;
+		minColliderLenght = 0.05f;
 		ball = GameObject.Find ("ball");
 		ball.rigidbody.useGravity = false;	
 	}
@@ -79,12 +78,11 @@ public class UserFieldManager : MonoBehaviour
 	{
 		if (currentObject != null) {				
 			currentObject.transform.position = MousePoint ();									
-			if (b) {
+			if (b) 
+			{
 				currentObject = null;
-				creationMode = -2;
-			
-			}
-				
+				creationMode = -2;			
+			}				
 		}
 	}
 	
@@ -145,7 +143,7 @@ public class UserFieldManager : MonoBehaviour
 	
 	Vector3 MousePoint ()
 	{
-		Ray ray = GameObject.Find ("Main Camera").camera.ScreenPointToRay (Input.mousePosition);
+		Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
 		RaycastHit hit = new RaycastHit ();
 		Physics.Raycast (ray, out hit, 1000, Physics.kDefaultRaycastLayers);
 		Vector3 rtn = hit.point;
@@ -171,15 +169,22 @@ public class UserFieldManager : MonoBehaviour
 		newDotPosition = MousePoint ();
 		CreateBoxCollider (newDotPosition);
 		dragging = false;
-		lastPointExist = false;		
-		currentTrailRendererObject.transform.position = lastDotPosition;
+		lastPointExist = false;	
+		try
+		{
+			currentTrailRendererObject.transform.position = lastDotPosition;
+		} catch(NullReferenceException e){}
 	}
 	
 	void CreateBoxCollider (Vector3 newDotPosition)
 	{		       
 		if (lastPointExist && wholeDistance < maxDistance) {
-			GameObject colliderKeeper = new GameObject ("collider");            
-			BoxCollider bc = colliderKeeper.AddComponent<BoxCollider> ();	
+			//GameObject colliderKeeper = new GameObject ("collider");            
+			//BoxCollider bc = colliderKeeper.AddComponent<BoxCollider> ();	
+			GameObject colliderKeeper = (GameObject) GameObject.Instantiate(brushPrefub);
+			//SphereCollider bc = colliderKeeper.GetComponent<SphereCollider> ();
+			BoxCollider bc = colliderKeeper.GetComponent<BoxCollider> ();
+				
 			float distance = Vector3.Distance (newDotPosition, lastDotPosition);
 			colliderKeeper.transform.position = new Vector3 ((newDotPosition.x - lastDotPosition.x) / 2 + lastDotPosition.x, (newDotPosition.y - lastDotPosition.y) / 2 + lastDotPosition.y, 0);
 			colliderKeeper.transform.LookAt (newDotPosition);
@@ -197,12 +202,7 @@ public class UserFieldManager : MonoBehaviour
 			lastDotPosition = newDotPosition;
 			lastPointExist = true;
 		}
-	}
-	
-	void SetButtonNotPressed (bool b)
-	{
-		buttonNotPressed = b;
-	}
+	}	
 	
 	public void ChooseObjectToCreate (int _index)
 	{	
@@ -239,10 +239,10 @@ public class UserFieldManager : MonoBehaviour
 		GUI.TextArea (new Rect (125, 50, 50, 20), x.ToString ());		
 		
 		GUI.BeginGroup (new Rect (Screen.width / 2 - 100, 2, 200, 20));
-		GUI.Box (new Rect (0, 0, 200, 20), statusBarBorder);
-		GUI.BeginGroup (new Rect (2, 0, (int)x * 2, 16));
-		GUI.DrawTexture (new Rect (0, 0, 200, 20), markerTexture, ScaleMode.ScaleAndCrop);
-		GUI.EndGroup ();
+			GUI.Box (new Rect (0, 0, 200, 20), statusBarBorder);
+			GUI.BeginGroup (new Rect (2, 0, (int)x * 2, 16));
+				GUI.DrawTexture (new Rect (0, 0, 200, 20), markerTexture, ScaleMode.ScaleAndCrop);
+			GUI.EndGroup ();
 		GUI.EndGroup ();
 		
 		
@@ -261,6 +261,9 @@ public class UserFieldManager : MonoBehaviour
 			ObjectUpdate (true);
 		} else {
 			ObjectUpdate (false);	
+		}
+		if (GUI.Button (new Rect (Screen.width - 50, 200, 50, 50), "Draw Line")) {					
+			this.creationMode = -1;			
 		}
 	}
 	
