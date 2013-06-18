@@ -8,6 +8,8 @@ public class UserFieldManager : MonoBehaviour
 	// 0 - ball object creation
 	// 1 - 2nd object to create
 	// -1 - second obj
+	public float smoothingSpeed = 0.01f;
+	
 	public GameObject brushPrefub;
 	int creationMode = -1;
 	public GameObject[] objectsToCreate;
@@ -40,6 +42,8 @@ public class UserFieldManager : MonoBehaviour
 	TrailRenderer trailRenderer;
 	Vector3 mousePosForTrail;
 	
+	Vector3 colliderSpawn;
+	
 	// Use this for initialization
 	void Start ()
 	{
@@ -58,6 +62,8 @@ public class UserFieldManager : MonoBehaviour
 		} else {			
 
 		}
+		
+
 	}
 	
 	void CreateObject ()
@@ -247,8 +253,10 @@ public class UserFieldManager : MonoBehaviour
 			if (Input.GetMouseButtonUp (0)) {
 				MouseUp ();
 			}			
-			if (dragging) {						
-				newDotPosition = MousePoint ();		
+			if (dragging) {	
+				newDotPosition = Vector3.Lerp(colliderSpawn, MousePoint (), smoothingSpeed);	
+				colliderSpawn = newDotPosition;
+				
 				float colliderLengthBetweenFrames = Vector3.Distance (newDotPosition, lastDotPosition);								
 				
 				if (newDotPosition != lastDotPosition) {	
@@ -318,7 +326,9 @@ public class UserFieldManager : MonoBehaviour
 		GameObject tr = Instantiate (trailPrefab, mouseHit, Quaternion.identity) as GameObject;
 		currentTrailRendererObject = tr;
 		tr.transform.position = mouseHit;		
-		dragging = true;				
+		dragging = true;
+		
+		colliderSpawn = MousePoint();
 	}
 	
 	void MouseUp ()

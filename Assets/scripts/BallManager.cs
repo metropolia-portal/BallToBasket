@@ -21,7 +21,9 @@ public class BallManager : MonoBehaviour {
 		if(transform.position.y < yTrash)
 		{			
 			Debug.Log("Lost");
-		}			
+		}	
+		
+		print (rigidbody.velocity.magnitude);
 	}
 	
 	void OnCollisionStay(Collision col)
