@@ -339,7 +339,7 @@ public class UserFieldManager : MonoBehaviour
 	
 	void MouseUp ()
 	{	
-		newDotPosition = MousePoint ();
+	/*	newDotPosition = MousePoint ();
 		if (newDotPosition.x > lastDotPosition.x) {
 			createBox (lastDotPosition, newDotPosition);
 			createBoxWithoutFrontSide (lastDotPosition, newDotPosition);
@@ -348,15 +348,15 @@ public class UserFieldManager : MonoBehaviour
 			createBox (newDotPosition, lastDotPosition);
 			createBoxWithoutFrontSide (newDotPosition, lastDotPosition);
 			lastDotPosition = newDotPosition;
-		}
+		}*/
 		
 		//CreateBoxCollider (newDotPosition);
 		dragging = false;
 		lastPointExist = false;	
-		try {
+		/*try {
 			currentTrailRendererObject.transform.position = lastDotPosition;
 		} catch (NullReferenceException e) {
-		}
+		}*/
 	}
 	
 	void CreateBoxCollider (Vector3 newDotPosition)
