@@ -237,6 +237,8 @@ public class UserFieldManager : MonoBehaviour
 		if (blockPhysicsMaterial) 
 			go.GetComponent<MeshCollider> ().material = blockPhysicsMaterial;	
 		go.GetComponent<MeshCollider> ().material  = colliderMeshMaterial;
+		
+		go.transform.parent = GameObject.Find ("UserMeshes").transform;
 	}
 	
 	void DrawLine ()
