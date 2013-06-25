@@ -44,14 +44,18 @@ public class UserFieldManager : MonoBehaviour
 	
 	Vector3 colliderSpawn;
 	
+	Vector3 ballSpawn;
+	
 	// Use this for initialization
 	void Start ()
 	{
 		maxDistance = 100;		
 		wholeDistance = 0;
 		minColliderLenght = 0.05f;
+		
 		ball = GameObject.Find ("ball");
 		ball.rigidbody.useGravity = false;	
+		ballSpawn = ball.transform.position;
 	}
 	
 	// Update is called once per frame
@@ -409,7 +413,13 @@ public class UserFieldManager : MonoBehaviour
 			ball.rigidbody.useGravity = !ball.rigidbody.useGravity;
 		}
 		if (GUI.Button (new Rect (50, 100, 70, 50), "Restart")) {
-			Application.LoadLevel (0);			
+			Application.LoadLevel (Application.loadedLevel);			
+		}
+		if (GUI.Button (new Rect (50, 150, 70, 50), "Reset ball")) {
+			ball.transform.position = ballSpawn;
+			ball.rigidbody.velocity = Vector3.zero;
+			ball.rigidbody.angularVelocity = Vector3.zero;
+			ball.rigidbody.useGravity = true;
 		}
 		
 		// bar
